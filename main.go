@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/RohanSinghCode/rssagg/internal/database"
 	"github.com/go-chi/chi"
@@ -40,6 +41,9 @@ func main() {
 		log.Fatal("PORT not defined!")
 	}
 
+	db := database.New(conn)
+	go startScraping(db, 10, time.Minute)
+
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
@@ -59,6 +63,8 @@ func main() {
 
 	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handleCreateFeed))
 	v1Router.Get("/feeds", apiCfg.handleGetFeeds)
+
+	v1Router.Get("/posts", apiCfg.middlewareAuth(apiCfg.handlePostForUser))
 
 	v1Router.Post("/feed_follows", apiCfg.middlewareAuth(apiCfg.handleCreateFeedFollow))
 	v1Router.Get("/feed_follows", apiCfg.middlewareAuth(apiCfg.handleGetFeedFollowers))
